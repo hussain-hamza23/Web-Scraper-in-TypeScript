@@ -15,13 +15,18 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test c": "vitest run --reporter verbose",
     "start": "tsx ./src/index.ts"
-    
   },
   "devDependencies": {
+    "@types/jsdom": "^27.0.0",
     "@types/node": "^25.2.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "dependencies": {
+    "jsdom": "^28.0.0"
   }
 }
