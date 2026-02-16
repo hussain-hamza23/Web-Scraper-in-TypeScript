@@ -1,5 +1,6 @@
 import { URL } from 'url';
 import { JSDOM } from 'jsdom';
+import pLimit, { LimitFunction } from "p-limit";
 
 export interface ExtractedPageData {
     url: string;
@@ -9,7 +10,86 @@ export interface ExtractedPageData {
     imageURLs: Set<string>;
 } 
 
+class ConcurrentCrawler {
+    private baseURL: URL;
+    private pages: Record<string, number>;
+    private limit: LimitFunction;
+    private readonly maxConcurrency: number = 10;
 
+    constructor(baseURL: URL) {
+        this.baseURL = baseURL;
+        this.pages = {};
+        this.limit = pLimit(this.maxConcurrency);
+    }
+
+    private addPagesVisit(normalizedURL: string): boolean{
+        this.pages[normalizedURL] = (this.pages[normalizedURL] ?? 0) + 1;
+        return this.pages[normalizedURL] <= 1;
+    }
+
+    private async getHTML(currentURL: string): Promise<string> {
+        return await this.limit(async () => {
+
+            try {
+                const response: Response = await fetch(currentURL, {
+                    method: "GET",
+                    mode: "cors",
+                    headers: {
+                        "User-Agent": "BootCrawler/1.0"
+                    }
+                });
+                if (!response.ok) {
+                    console.log(`Failed to fetch ${currentURL}: ${response.status} ${response.statusText}`);
+                    return "Failed";
+                }
+                if (!response.headers.get("content-type")?.includes("text/html")) {
+                    console.log(`Non-HTML content at ${currentURL}: ${response.headers.get("content-type")}`);
+                    return "Failed";
+                }
+                return response.text();
+            }
+            catch (err) {
+                console.log(`Error fetching ${currentURL}: ${err}`);
+                return "Failed";
+            }
+        });
+    }
+
+    private async crawlPage(currentURL: string): Promise<void> {
+        const current = new URL(currentURL);
+        if (this.baseURL.hostname !== current.hostname) { return ; }
+
+        const normalized_current = normalizeURL(currentURL);
+        if (!this.addPagesVisit(normalized_current)) { return; }
+
+        console.log(`Crawling: ${currentURL}`);
+        let html: string;
+        try {
+            html = await this.getHTML(currentURL);
+        } catch (error) {
+            console.error(`Error fetching ${currentURL}: ${error}`);
+            return;
+        }
+
+        const URLs: Set<string> = getURLsFromHTML(html, currentURL);
+
+        const crawl = [...URLs].map(
+            (url) => this.crawlPage(url)
+        )
+        
+        await Promise.all(crawl);
+    }
+
+    public async crawl(): Promise<Record<string, number>> {
+        await this.crawlPage(this.baseURL.toString());
+        return this.pages;
+    }
+}
+
+export async function crawlSiteAsync(baseURL: URL): Promise<Record<string, number>>{
+    const crawler = new ConcurrentCrawler(baseURL); 
+    return await crawler.crawl();
+}
 
 export function normalizeURL(urlString: string): string{
     /*if (!URL.canParse(urlString)) {
@@ -126,4 +206,6 @@ export function extractPageData(htmlBody: string, pageURL: string): ExtractedPag
         imageURLs: imageURLs
     } as const;
 }
+
+
 

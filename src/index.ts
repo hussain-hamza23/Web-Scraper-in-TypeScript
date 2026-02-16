@@ -1,7 +1,7 @@
-import { extractPageData } from './crawl';
+import { extractPageData, getHTML, crawlPage, crawlSiteAsync } from './crawl';
+import { URL } from 'url';
 
-
-function main() {
+async function main() {
     const args = process.argv.slice(2);
 
     if (args.length !== 1) {
@@ -12,9 +12,20 @@ function main() {
         )
         process.exit(1);
     }
-    console.log(`Crawling URL: ${args[0]}`);
-    process.exit(0);
+    const base_url: string = args[0];
+    let url: URL;
+    try {
+        url = new URL(base_url);
+    }
+    catch (err) {
+        console.error(`Invalid URL: ${base_url}\n ${err}`);
+        process.exit(1);
+    }
+    console.log(`Crawling URL: ${base_url}`);
+    const crawl = await crawlSiteAsync(url);
 
+    console.log(crawl);
+    //process.exit(0);
 }
 
 main();

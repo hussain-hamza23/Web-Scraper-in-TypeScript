@@ -17,7 +17,8 @@
   "scripts": {
     "test": "vitest run",
     "test c": "vitest run --reporter verbose",
-    "start": "tsx ./src/index.ts"
+    "start": "tsx ./src/index.ts",
+    "bench": "tsx ./src/bench.ts"
   },
   "devDependencies": {
     "@types/jsdom": "^27.0.0",
@@ -27,6 +28,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "jsdom": "^28.0.0"
+    "jsdom": "^28.0.0",
+    "p-limit": "^7.3.0"
   }
 }

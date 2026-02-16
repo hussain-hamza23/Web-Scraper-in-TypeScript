@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .nvmrc
-.env
 *.test.ts
 *.test.js
+src/bench.ts
+src/alternatives.ts
