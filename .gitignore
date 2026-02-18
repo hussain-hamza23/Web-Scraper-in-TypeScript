@@ -1,7 +1,7 @@
 node_modules/
-dist/
 .nvmrc
 *.test.ts
 *.test.js
+*.csv
 src/bench.ts
 src/alternatives.ts
